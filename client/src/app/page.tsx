@@ -3,13 +3,19 @@ import ChatComponent from "../components/custom-components/Chat";
 
 export default function Home() {
   return (
-    <div>
-      <div className="w-screen flex">
-        <div className="w-[30vw] min-h-screen p-4 flex justify-center items-center">
-          <FileUploadComponent />
-        </div>
-        <div className="w-[70vw] min-h-screen border-l-2 border-white">
+    <div className="min-h-screen bg-gray-50 p-4">
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* Chat Window */}
+        <div className="bg-white rounded-lg shadow-lg border">
           <ChatComponent />
+        </div>
+
+        {/* Space between components */}
+        <div className="h-4"></div>
+
+        {/* File Upload Component */}
+        <div className="flex justify-center">
+          <FileUploadComponent />
         </div>
       </div>
     </div>
