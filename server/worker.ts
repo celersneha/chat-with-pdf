@@ -3,6 +3,7 @@ import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
 import vectorStore from "./lib/vectorStore";
 import fs from "fs";
+import path from "path";
 
 const worker = new Worker(
   "file-upload-queue",
@@ -32,12 +33,15 @@ const worker = new Worker(
 
     await vectorStore.addDocuments(documentsWithMetadata);
 
-    if (job.data.path) {
-      fs.unlink(job.data.path, (err: any) => {
+    const jobObject = JSON.parse(job.data);
+
+    if (jobObject.path) {
+      const normalizedPath = path.resolve(jobObject.path);
+      fs.unlink(normalizedPath, (err: any) => {
         if (err) {
           console.error("File delete error:", err);
         } else {
-          console.log("File deleted from uploads:", job.data.path);
+          console.log("File deleted from uploads:", normalizedPath);
         }
       });
     }
