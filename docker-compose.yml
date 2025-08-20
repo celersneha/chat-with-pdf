@@ -3,8 +3,47 @@ services:
     image: valkey/valkey
     ports:
       - 6379:6379
+    networks:
+      - chat-with-pdf
+    volumes:
+      - valkey_data:/data
 
   qdrant:
     image: qdrant/qdrant
     ports:
       - 6333:6333
+    networks:
+      - chat-with-pdf
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  postgres:
+    image: postgres:17.5-alpine3.22
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - chat-with-pdf
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+    networks:
+      - chat-with-pdf
+
+networks:
+  chat-with-pdf:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  valkey_data:
+  qdrant_data:
