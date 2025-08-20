@@ -1,9 +1,13 @@
 import { Worker } from "bullmq";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
-import vectorStore from "./lib/vectorStore";
+import vectorStore from "./src/lib/vectorStore";
 import fs from "fs";
 import path from "path";
+import { users } from "./src/db/schema/user.schema";
+import { db } from "./src/db";
+import { eq } from "drizzle-orm";
+import { files } from "@mistralai/mistralai";
 
 const worker = new Worker(
   "file-upload-queue",
@@ -44,6 +48,25 @@ const worker = new Worker(
           console.log("File deleted from uploads:", normalizedPath);
         }
       });
+
+      const user = await db
+        .select()
+        .from(users)
+        .where(eq(users.userid, jobObject.userId));
+
+      // increment upload file count
+      if (user && user.length > 0) {
+        await db
+          .update(users)
+          .set({
+            uploadedFileCount: (user[0]?.uploadedFileCount ?? 0) + 1,
+            files: [
+              ...(Array.isArray(user[0]?.files) ? user[0]?.files : []),
+              { fileName: jobObject.fileName, fileId: jobObject.fileId },
+            ],
+          })
+          .where(eq(users.userid, jobObject.userId));
+      }
     }
   },
   {
