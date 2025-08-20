@@ -1,8 +1,9 @@
 import express from "express";
 import cors from "cors";
 import { clerkMiddleware } from "@clerk/express";
-import fileRoutes from "./routes/file.route";
-import chatRoutes from "./routes/chat.route";
+import fileRoutes from "./src/routes/file.route";
+import chatRoutes from "./src/routes/chat.route";
+import userRoutes from "./src/routes/user.route";
 
 // Extend Express Request type to include 'auth'
 declare global {
@@ -26,6 +27,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/files", fileRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/user", userRoutes);
 
 // Add error handling middleware
 app.use(
