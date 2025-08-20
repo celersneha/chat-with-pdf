@@ -5,8 +5,10 @@ import {
   SignedOut,
   SignedIn,
   SignUpButton,
+  SignOutButton,
 } from "@clerk/nextjs";
 import "./globals.css";
+import RegisterUserOnSignIn from "@/components/RegisterUserOnSignIn";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,7 +41,11 @@ export default function RootLayout({
               <SignUpButton />
             </SignedOut>
           </section>
-          <SignedIn>{children}</SignedIn>
+          <SignedIn>
+            <SignOutButton />
+            <RegisterUserOnSignIn />
+            {children}
+          </SignedIn>
         </body>
       </html>
     </ClerkProvider>
