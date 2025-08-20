@@ -12,7 +12,8 @@
   "scripts": {
     "start": "bun run index.ts",
     "dev": "bun --watch run index.ts",
-    "dev:worker": "bun --watch run worker.ts"
+    "dev:worker": "bun --watch run worker.ts",
+    "db:push": "bunx drizzle-kit push --config=drizzle.config.ts"
   },
   "peerDependencies": {
     "typescript": "^5"
@@ -26,8 +27,11 @@
     "@mistralai/mistralai": "^1.9.17",
     "bullmq": "^5.58.0",
     "cors": "^2.8.5",
+    "drizzle-kit": "^0.31.4",
+    "drizzle-orm": "^0.44.4",
     "express": "^5.1.0",
     "multer": "^2.0.2",
-    "pdf-parse": "^1.1.1"
+    "pdf-parse": "^1.1.1",
+    "pg": "^8.16.3"
   }
 }
