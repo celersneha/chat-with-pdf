@@ -10,7 +10,7 @@ export const chat = async (req: any, res: any) => {
       return res.status(401).json({ error: "Unauthorized: userId not found" });
     }
 
-    const userQuery = req.query.message as string;
+    const userQuery = req.body.message as string;
 
     if (!userQuery) {
       return res.status(400).json({ error: "Message parameter is required" });
@@ -37,8 +37,7 @@ export const chat = async (req: any, res: any) => {
     const pageContents = similarData.map((doc) => doc.pageContent);
     const contextText = pageContents.join("\n---\n");
 
-    const SYSTEM_PROMPT = `You are helpfull AI Assistant who answers the user query based on the available pdf file Context: ${contextText}
-    Don't add any styling such as bold, italics, or lists. Mention the entire content which is retrieved.
+    const SYSTEM_PROMPT = `You are helpfull AI Assistant who answers the user query based on the available pdf file Context: ${contextText}. Mention the entire content which is retrieved.
     `;
 
     const chatResult = await client.chat.complete({
