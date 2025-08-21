@@ -1,10 +1,13 @@
-import { clerkClient, getAuth } from "@clerk/express";
+import { getAuth } from "@clerk/express";
 import queue from "../lib/queue";
-import fs from "fs";
-import vectorStore from "../lib/vectorStore";
-import { db } from "../db";
-import { eq, count } from "drizzle-orm";
 import { users } from "../db/schema/user.schema";
+import { getUserById, canUploadFile } from "../services/user.services";
+import { db } from "../db";
+import {
+  deleteFile as deleteFileService,
+  updateDBWithUploadedFile,
+} from "../services/file.services";
+import { eq } from "drizzle-orm";
 
 export const uploadFile = async (req: any, res: any) => {
   try {
@@ -15,18 +18,20 @@ export const uploadFile = async (req: any, res: any) => {
     }
 
     // check the uploaded file count
-    const user = await db.select().from(users).where(eq(users.userid, userId));
+    const user = await getUserById(userId);
 
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    const fileCount = user[0]?.uploadedFileCount || 0;
-
-    if (fileCount >= 5) {
+    if (!canUploadFile(user))
       return res.status(403).json({ error: "File upload limit reached" });
-    }
-    console.log(req.file);
+
+    const fileId = `${userId}-${Date.now()}`;
+    const fileName = req.file?.originalname;
+
+    await updateDBWithUploadedFile(userId, fileName, fileId);
+
     const jobData = {
       action: "upload",
       destination: req.file?.destination,
@@ -51,33 +56,31 @@ export const getFilesOfCurrentUser = async (req: any, res: any) => {
     return res.status(401).json({ error: "Unauthorized: userId not found" });
   }
 
-  let filter: {} = {};
-  if (userId) {
-    filter = {
-      must: [
-        {
-          key: "metadata.userId",
-          match: { value: userId },
-        },
-      ],
-    };
-  }
+  const user = await getUserById(userId);
 
-  const docs = await vectorStore.similaritySearch("", 1000, filter);
+  const files = user?.files ?? [];
 
-  const filesMap = new Map<string, string>();
-  docs.forEach((doc: any) => {
-    if (doc.metadata?.fileId && doc.metadata?.fileName) {
-      filesMap.set(doc.metadata.fileId, doc.metadata.fileName);
+  res.status(200).json({ files });
+};
+
+export const deleteFile = async (req: any, res: any) => {
+  try {
+    const { userId } = getAuth(req);
+    const { fileId } = req.params;
+
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized: userId not found" });
     }
-  });
 
-  const files = Array.from(filesMap.entries())
-    .slice(0, 5)
-    .map(([fileId, fileName]) => ({
-      fileId,
-      fileName,
-    }));
+    const user = await getUserById(userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
 
-  res.json({ documents: files });
+    await deleteFileService(userId, fileId);
+
+    res.json({ message: "File deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
+  }
 };
