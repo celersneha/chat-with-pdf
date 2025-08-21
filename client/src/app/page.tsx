@@ -26,9 +26,6 @@ export default function Home() {
           <div className="flex justify-center">
             <FileUploadComponent
               onUploadSuccess={() => {
-                console.log("Upload success callback triggered");
-                console.log("sidebarRef.current:", sidebarRef.current);
-
                 // Add a small delay to let the worker process the file
                 setTimeout(() => {
                   sidebarRef.current?.fetchUploadedFiles();
