@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import React, { useState } from "react";
 import axios from "axios";
 import { useAuth } from "@clerk/nextjs";
+import { axiosInstance } from "@/lib/api";
+import Streamdown from "streamdown";
 
 interface Doc {
   pageContent?: string;
@@ -26,6 +28,7 @@ const ChatComponent: React.FC = () => {
   const [message, setMessage] = useState<string>("");
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const api = axiosInstance();
 
   const handleSendChatMessage = async () => {
     if (!message.trim()) return;
@@ -41,14 +44,9 @@ const ChatComponent: React.FC = () => {
 
       const token = await getToken(); // Get Clerk token
 
-      const res = await axios.get(
+      const res = await api.post(
         `${process.env.NEXT_PUBLIC_API_URL}/api/chat/chat-with-pdf`,
-        {
-          params: { message },
-          headers: {
-            Authorization: `Bearer ${token}`, // Send auth token
-          },
-        }
+        { message }
       );
 
       const data = res.data;
@@ -119,7 +117,11 @@ const ChatComponent: React.FC = () => {
             }`}
           >
             <div className="font-semibold capitalize mb-1">{msg.role}</div>
-            <div className="whitespace-pre-wrap">{msg.content}</div>
+            {msg.role === "assistant" ? (
+              <Streamdown>{msg.content || ""}</Streamdown>
+            ) : (
+              <div className="whitespace-pre-wrap">{msg.content}</div>
+            )}
             {msg.documents && msg.documents.length > 0 && (
               <div className="mt-2 text-xs opacity-70">
                 Sources: {msg.documents.length} documents
