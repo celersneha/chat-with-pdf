@@ -4,6 +4,6 @@ import { Router } from "express";
 
 const router = Router();
 
-router.route("/chat-with-pdf").get(requireAuth(), chat);
+router.route("/chat-with-pdf").post(requireAuth(), chat);
 
 export default router;
