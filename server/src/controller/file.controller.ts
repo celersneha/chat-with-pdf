@@ -27,6 +27,7 @@ export const uploadFile = async (req: any, res: any) => {
     if (!canUploadFile(user))
       return res.status(403).json({ error: "File upload limit reached" });
 
+    // ✅ Ek hi fileId generate karo
     const fileId = `${userId}-${Date.now()}`;
     const fileName = req.file?.originalname;
 
@@ -36,8 +37,8 @@ export const uploadFile = async (req: any, res: any) => {
       action: "upload",
       destination: req.file?.destination,
       path: req.file?.path,
-      fileId: `${userId}-${Date.now()}`,
-      fileName: req.file?.originalname,
+      fileId: fileId,
+      fileName: fileName,
       userId: userId,
     };
 
