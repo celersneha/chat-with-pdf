@@ -4,36 +4,31 @@ import axios, {
   AxiosResponse,
   AxiosError,
 } from "axios";
-import { useAuth } from "@clerk/nextjs";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
 
-// Custom hook to get an Axios instance with Clerk token attached
-export const axiosInstance = (): AxiosInstance => {
-  const { getToken } = useAuth();
-
+// Normal (non-hook) axios instance generator with token param
+export const axiosInstance = (token?: string): AxiosInstance => {
   const api = axios.create({
     baseURL: API_BASE_URL,
     withCredentials: true,
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
 
-  // Attach Clerk token to every request
-  api.interceptors.request.use(async (config) => {
-    const token = await getToken();
-    if (token) {
-      config.headers = config.headers || {};
-      config.headers["Authorization"] = `Bearer ${token}`;
-    }
-    return config;
-  });
-
-  // (Optional) Add response interceptor for error handling, refresh, etc.
+  // Response interceptor for error normalization
   api.interceptors.response.use(
     (response: AxiosResponse) => response,
     async (error: AxiosError) => {
-      // Custom error handling can go here
-      return Promise.reject(error);
+      // Normalize error object
+      let normalizedError = {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+        isNetworkError: !error.response,
+      };
+      // You can add more normalization logic here if needed
+      return Promise.reject(normalizedError);
     }
   );
 
