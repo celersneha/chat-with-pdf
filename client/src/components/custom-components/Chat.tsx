@@ -1,7 +1,7 @@
 "use client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { axiosInstance } from "@/lib/api";
 import Streamdown from "streamdown";
@@ -22,18 +22,22 @@ interface IMessage {
   documents?: Doc[];
 }
 
-const ChatComponent: React.FC = () => {
+// Accept selectedFileIds as prop
+const ChatComponent: React.FC<{ selectedFileIds: string[] }> = ({
+  selectedFileIds,
+}) => {
   const { getToken, isSignedIn } = useAuth();
   const [message, setMessage] = useState<string>("");
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const api = axiosInstance();
-
   const handleSendChatMessage = async () => {
     if (!message.trim()) return;
-
     if (!isSignedIn) {
       console.error("User not signed in");
+      return;
+    }
+    if (!selectedFileIds || selectedFileIds.length === 0) {
       return;
     }
 
@@ -41,11 +45,13 @@ const ChatComponent: React.FC = () => {
       setIsLoading(true);
       setMessages((prev) => [...prev, { role: "user", content: message }]);
 
-      const token = await getToken(); // Get Clerk token
+      const token = await getToken();
+
+      const api = axiosInstance(token ?? undefined);
 
       const res = await api.post(
         `${process.env.NEXT_PUBLIC_API_URL}/api/chat/chat-with-pdf`,
-        { message }
+        { message, fileIds: selectedFileIds }
       );
 
       const data = res.data;
@@ -64,10 +70,7 @@ const ChatComponent: React.FC = () => {
       console.error("❌ Chat error:", error);
       if (error.response) {
         console.error("Error response:", error.response.data);
-        console.error("Error status:", error.response.status);
       }
-
-      // Add error message to chat
       setMessages((prev) => [
         ...prev,
         {
@@ -80,7 +83,6 @@ const ChatComponent: React.FC = () => {
     }
   };
 
-  // Show sign-in message if user is not authenticated
   if (!isSignedIn) {
     return (
       <div className="p-8 flex justify-center items-center h-64">
@@ -166,11 +168,16 @@ const ChatComponent: React.FC = () => {
           />
           <Button
             onClick={handleSendChatMessage}
-            disabled={!message.trim() || isLoading}
+            disabled={!message.trim() || isLoading || !selectedFileIds.length}
           >
             {isLoading ? "Sending..." : "Send"}
           </Button>
         </div>
+        {!selectedFileIds.length && (
+          <div className="text-xs text-red-500 mt-2">
+            Please select at least one file to ask a question.
+          </div>
+        )}
       </div>
     </div>
   );
