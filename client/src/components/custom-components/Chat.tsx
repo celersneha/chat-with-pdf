@@ -2,7 +2,6 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import React, { useState } from "react";
-import axios from "axios";
 import { useAuth } from "@clerk/nextjs";
 import { axiosInstance } from "@/lib/api";
 import Streamdown from "streamdown";
