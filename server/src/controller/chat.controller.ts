@@ -11,33 +11,35 @@ export const chat = async (req: any, res: any) => {
     }
 
     const userQuery = req.body.message as string;
+    const fileIds = req.body.fileIds as string[];
 
     if (!userQuery) {
       return res.status(400).json({ error: "Message parameter is required" });
     }
-
-    let filter: {} = {};
-    if (userId) {
-      filter = {
-        must: [
-          {
-            key: "metadata.userId",
-            match: { value: userId },
-          },
-        ],
-      };
+    if (!fileIds || !Array.isArray(fileIds) || fileIds.length === 0) {
+      return res
+        .status(400)
+        .json({ error: "At least one file must be selected" });
     }
+
+    // Filter: userId + fileIds
+    const filter = {
+      must: [
+        { key: "metadata.userId", match: { value: userId } },
+        { key: "metadata.fileId", match: { any: fileIds } },
+      ],
+    };
 
     const similarData = await vectorStore.similaritySearch(
       userQuery,
-      5,
+      8,
       filter
     );
 
     const pageContents = similarData.map((doc) => doc.pageContent);
     const contextText = pageContents.join("\n---\n");
 
-    const SYSTEM_PROMPT = `You are helpfull AI Assistant who answers the user query based on the available pdf file Context: ${contextText}. Mention the entire content which is retrieved.
+    const SYSTEM_PROMPT = `You are helpfull AI Assistant who answers the user query based on the available pdf file Context: ${contextText}. Mention the entire content which is retrieved. Give a summarized content if the answer is very much long.
     `;
 
     const chatResult = await client.chat.complete({
@@ -47,16 +49,6 @@ export const chat = async (req: any, res: any) => {
         { role: "user", content: userQuery },
       ],
     });
-
-    const aiContent = chatResult?.choices[0]?.message.content;
-    let aiContentPreview: string;
-    if (typeof aiContent === "string") {
-      aiContentPreview = aiContent.substring(0, 100) + "...";
-    } else if (Array.isArray(aiContent)) {
-      aiContentPreview = "[ContentChunk[] response]";
-    } else {
-      aiContentPreview = "[Unknown response type]";
-    }
 
     return res.json({
       message: chatResult?.choices[0]?.message.content,
