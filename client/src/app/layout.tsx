@@ -9,6 +9,7 @@ import {
 } from "@clerk/nextjs";
 import "./globals.css";
 import RegisterUserOnSignIn from "@/components/RegisterUserOnSignIn";
+import { Toaster } from "sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -44,6 +45,7 @@ export default function RootLayout({
           <SignedIn>
             <SignOutButton />
             <RegisterUserOnSignIn />
+            <Toaster />
             {children}
           </SignedIn>
         </body>
