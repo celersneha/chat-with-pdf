@@ -1,10 +1,10 @@
 "use client";
-import { Upload, File, X } from "lucide-react";
+import { Upload } from "lucide-react";
 import React, { useRef, useState, useEffect } from "react";
-import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@clerk/nextjs";
 import { axiosInstance } from "@/lib/api";
+import { useUploadFile } from "@/hooks//files/useUploadFile";
 
 interface FileUploadComponentProps {
   onUploadSuccess?: () => void;
@@ -21,6 +21,7 @@ const FileUploadComponent: React.FC<FileUploadComponentProps> = ({
     uploadedAt?: string;
   } | null>(null);
   const [showFileName, setShowFileName] = useState<boolean>(true);
+  const uploadMutation = useUploadFile();
 
   // Listen for chat messages to hide filename after first chat
   useEffect(() => {
@@ -52,40 +53,9 @@ const FileUploadComponent: React.FC<FileUploadComponentProps> = ({
     if (files && files.length > 0) {
       const file = files.item(0);
       if (file) {
-        if (!isSignedIn) {
-          console.error("User not signed in");
-          return;
-        }
-
-        try {
-          const token = await getToken();
-
-          const formData = new FormData();
-          formData.append("pdf", file);
-
-          const res = await api.post(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/files/upload`,
-            formData,
-            {
-              headers: {
-                "Content-Type": "multipart/form-data",
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-
-          setCurrentFile(res.data.file);
-          setShowFileName(true);
-          if (onUploadSuccess) {
-            onUploadSuccess();
-          }
-        } catch (error: any) {
-          console.error("❌ File upload error:", error);
-          if (error.response) {
-            console.error("Error response:", error.response.data);
-            console.error("Error status:", error.response.status);
-          }
-        }
+        const formData = new FormData();
+        formData.append("pdf", file);
+        uploadMutation.mutate(formData);
       }
     }
     if (fileInputRef.current) fileInputRef.current.value = "";
