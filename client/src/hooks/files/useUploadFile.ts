@@ -17,7 +17,6 @@ export const useUploadFile = () => {
       queryClient.invalidateQueries({ queryKey: ["files"] });
     },
     onError: (error: any) => {
-      console.log(error);
       toast(error?.data?.error || "File upload failed");
     },
   });
