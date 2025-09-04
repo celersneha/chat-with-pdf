@@ -64,8 +64,8 @@ const FileUploadComponent: React.FC<FileUploadComponentProps> = ({
   // Show sign-in message if user is not authenticated
   if (!isSignedIn) {
     return (
-      <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm max-w-sm w-full">
-        <p className="text-gray-600 text-center">
+      <div className="bg-[var(--color-surface)] border border-[var(--color-accent)]/30 rounded-2xl p-6 shadow-md max-w-sm w-full flex flex-col items-center">
+        <p className="text-[var(--color-secondary)] text-center">
           Please sign in to upload files
         </p>
       </div>
@@ -73,23 +73,20 @@ const FileUploadComponent: React.FC<FileUploadComponentProps> = ({
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm max-w-sm w-full">
-      <div className="flex justify-center items-center flex-col w-full">
-        <div className="text-center w-full">
-          <h3 className="text-lg font-semibold mb-3 text-gray-800">
-            Upload PDF
-          </h3>
-          <Button
-            variant="default"
-            size="default"
-            className="flex gap-2 items-center w-full"
-            onClick={handleFileUploadClick}
-          >
-            <Upload size={16} />
-            Choose PDF
-          </Button>
-        </div>
-
+    <div className="bg-[var(--color-surface)] border border-[var(--color-accent)]/30 rounded-2xl p-6 shadow-md max-w-sm w-full flex flex-col items-center">
+      <div className="flex flex-col items-center w-full">
+        <h3 className="text-lg font-semibold mb-3 text-[var(--color-primary)]">
+          Upload PDF
+        </h3>
+        <Button
+          variant="default"
+          size="default"
+          className="flex gap-2 items-center w-full bg-[var(--color-accent)] hover:bg-[#c81e41] text-white rounded-xl font-semibold shadow transition"
+          onClick={handleFileUploadClick}
+        >
+          <Upload size={16} />
+          Choose PDF
+        </Button>
         <input
           ref={fileInputRef}
           type="file"
