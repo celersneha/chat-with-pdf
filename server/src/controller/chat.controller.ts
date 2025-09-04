@@ -1,6 +1,15 @@
 import { getAuth } from "@clerk/express";
-import vectorStore from "../lib/vectorStore";
-import client from "../lib/client";
+import { appGraph, GraphAnnotation } from "../lib/chatMemory";
+import { HumanMessage } from "@langchain/core/messages";
+import { v4 as uuidv4 } from "uuid";
+import { z } from "zod";
+
+// Request validation schema
+const chatRequestSchema = z.object({
+  message: z.string(),
+  fileIds: z.array(z.string()),
+  sessionId: z.string().uuid(),
+});
 
 export const chat = async (req: any, res: any) => {
   try {
@@ -10,51 +19,72 @@ export const chat = async (req: any, res: any) => {
       return res.status(401).json({ error: "Unauthorized: userId not found" });
     }
 
-    const userQuery = req.body.message as string;
-    const fileIds = req.body.fileIds as string[];
+    // Validate request data
+    const parsedData = chatRequestSchema.safeParse(req.body);
 
-    if (!userQuery) {
-      return res.status(400).json({ error: "Message parameter is required" });
-    }
-    if (!fileIds || !Array.isArray(fileIds) || fileIds.length === 0) {
-      return res
-        .status(400)
-        .json({ error: "At least one file must be selected" });
+    if (!parsedData.success) {
+      return res.status(400).json({
+        error: "Invalid request format",
+        details: parsedData.error.errors,
+      });
     }
 
-    // Filter: userId + fileIds
-    const filter = {
-      must: [
-        { key: "metadata.userId", match: { value: userId } },
-        { key: "metadata.fileId", match: { any: fileIds } },
-      ],
+    const { message, fileIds, sessionId } = parsedData.data;
+
+    if (fileIds.length === 0) {
+      return res.status(400).json({
+        error: "At least one file must be selected",
+      });
+    }
+
+    const inputMessage = new HumanMessage(message);
+
+    const config = {
+      configurable: { thread_id: sessionId },
     };
 
-    const similarData = await vectorStore.similaritySearch(
-      userQuery,
-      8,
-      filter
-    );
+    // Initial state for the graph
+    const initialState = {
+      messages: [inputMessage],
+      userId: userId,
+      selectedFileIds: fileIds,
+    };
 
-    const pageContents = similarData.map((doc) => doc.pageContent);
-    const contextText = pageContents.join("\n---\n");
+    const result = await appGraph.invoke(initialState, config);
 
-    const SYSTEM_PROMPT = `You are helpfull AI Assistant who answers the user query based on the available pdf file Context: ${contextText}. Mention the entire content which is retrieved. Give a summarized content if the answer is very much long.
-    `;
+    // console.log("Chat response from appGraph:", result);
 
-    const chatResult = await client.chat.complete({
-      model: "mistral-small-latest",
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: userQuery },
-      ],
-    });
+    // Find the last AI message
+    let aiResponse = null;
+    if (Array.isArray(result.messages)) {
+      const aiMsg = result.messages.findLast(
+        (msg: any) =>
+          msg._getType?.() === "ai" && typeof msg.content === "string"
+      );
+      if (aiMsg) {
+        aiResponse = {
+          type: "ai",
+          content: aiMsg.content,
+        };
+      }
+    }
 
-    return res.json({
-      message: chatResult?.choices[0]?.message.content,
-      docs: similarData,
+    // console.log("AI Chat response:", aiResponse);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        response: aiResponse,
+        threadId: sessionId,
+        summary: result.summary || "",
+      },
+      message: aiResponse?.content,
     });
   } catch (error) {
-    res.status(500).json({ error: "Internal server error" });
+    console.error("Chat controller error:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Internal server error",
+    });
   }
 };
