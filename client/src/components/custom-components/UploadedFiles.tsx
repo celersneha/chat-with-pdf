@@ -31,31 +31,35 @@ export default function UploadedFilesSidebar({
   };
 
   return (
-    <aside className="w-64 bg-gray-100 p-4 h-screen border-r border-gray-200 overflow-y-auto">
-      <h3 className="mb-4 text-lg font-semibold">Uploaded Files</h3>
+    <aside className="w-64 bg-[var(--color-surface)] p-4 h-screen border-r border-[var(--color-accent)]/20 shadow-sm overflow-y-auto">
+      <h3 className="mb-4 text-lg font-semibold text-[var(--color-primary)]">
+        Uploaded Files
+      </h3>
       {isLoading ? (
-        <div>Loading...</div>
+        <div className="text-[var(--color-secondary)]">Loading...</div>
       ) : files.length === 0 ? (
-        <div>No files uploaded.</div>
+        <div className="text-[var(--color-secondary)]">No files uploaded.</div>
       ) : (
         <ul className="list-none p-0">
           {files.map((file: { fileId: string; fileName: string }) => (
             <li
               key={file.fileId}
-              className="mb-3 flex items-center justify-between group"
+              className="mb-3 flex items-center justify-between group bg-[var(--color-background)] rounded-lg px-2 py-2 border border-[var(--color-accent)]/10 hover:border-[var(--color-accent)]/40 transition"
             >
-              <label className="flex items-center">
+              <label className="flex items-center cursor-pointer">
                 <input
                   type="checkbox"
                   checked={selected.includes(file.fileId)}
                   onChange={() => toggleFile(file.fileId)}
-                  className="mr-2"
+                  className="mr-2 accent-[var(--color-accent)]"
                 />
-                <span className="break-all">{file.fileName}</span>
+                <span className="break-all text-[var(--color-primary)]">
+                  {file.fileName}
+                </span>
               </label>
               <button
                 onClick={() => handleDelete(file.fileId)}
-                className="ml-2 text-red-500 font-bold text-lg opacity-70 hover:opacity-100 hover:text-red-700 transition"
+                className="ml-2 text-[var(--color-accent)] font-bold text-lg opacity-70 hover:opacity-100 hover:text-[#c81e41] transition"
                 title="Delete"
                 aria-label="Delete"
                 disabled={deleteMutation.isPending}
