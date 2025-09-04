@@ -357,7 +357,7 @@ After running `docker-compose up -d`, access:
 2. **Database Migration**: `cd server && bun run db:push`
 3. **Start Backend**: `cd server && bun run dev`
 4. **Start Worker**: `cd server && bun run dev:worker`
-5. **Start Frontend**: `cd client && npm run dev`
+5. **Start Frontend**: `cd client && bun run dev`
 6. **Access Application**: http://localhost:3000
 
 ## 📊 Performance
