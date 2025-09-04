@@ -1,7 +1,7 @@
 "use client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { axiosInstance } from "@/lib/api";
 import Streamdown from "streamdown";
@@ -22,7 +22,6 @@ interface IMessage {
   documents?: Doc[];
 }
 
-// Accept selectedFileIds as prop
 const ChatComponent: React.FC<{ selectedFileIds: string[] }> = ({
   selectedFileIds,
 }) => {
@@ -30,7 +29,25 @@ const ChatComponent: React.FC<{ selectedFileIds: string[] }> = ({
   const [message, setMessage] = useState<string>("");
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const api = axiosInstance();
+  const [summary, setSummary] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isLoading]);
+
+  useEffect(() => {
+    // Only run on client
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("sessionId");
+      const sid = crypto.randomUUID();
+      sessionStorage.setItem("sessionId", sid);
+      setSessionId(sid);
+    }
+  }, []);
+
   const handleSendChatMessage = async () => {
     if (!message.trim()) return;
     if (!isSignedIn) {
@@ -40,18 +57,19 @@ const ChatComponent: React.FC<{ selectedFileIds: string[] }> = ({
     if (!selectedFileIds || selectedFileIds.length === 0) {
       return;
     }
+    if (!sessionId) return; // Wait for sessionId
 
     try {
       setIsLoading(true);
+      setError(null);
       setMessages((prev) => [...prev, { role: "user", content: message }]);
 
       const token = await getToken();
-
       const api = axiosInstance(token ?? undefined);
 
       const res = await api.post(
         `${process.env.NEXT_PUBLIC_API_URL}/api/chat/chat-with-pdf`,
-        { message, fileIds: selectedFileIds }
+        { message, fileIds: selectedFileIds, sessionId }
       );
 
       const data = res.data;
@@ -64,8 +82,8 @@ const ChatComponent: React.FC<{ selectedFileIds: string[] }> = ({
           documents: data?.docs,
         },
       ]);
-
       setMessage("");
+      setSummary(data?.summary || null);
     } catch (error: any) {
       console.error("❌ Chat error:", error);
       if (error.response) {
@@ -99,6 +117,14 @@ const ChatComponent: React.FC<{ selectedFileIds: string[] }> = ({
       <div className="border-b border-gray-200 p-4">
         <h2 className="text-lg font-semibold text-gray-800">Chat with PDF</h2>
       </div>
+
+      {/* Summary area */}
+      {summary && (
+        <div className="bg-yellow-50 border border-yellow-200 text-yellow-900 rounded-md px-4 py-2 m-4 mb-0 text-sm">
+          <strong>Summary:</strong> {summary}
+        </div>
+      )}
+      {error && <div className="text-red-500 text-xs px-4 py-1">{error}</div>}
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -151,6 +177,7 @@ const ChatComponent: React.FC<{ selectedFileIds: string[] }> = ({
             </div>
           </div>
         )}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Input Area */}
