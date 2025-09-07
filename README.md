@@ -366,4 +366,3 @@ After running `docker-compose up -d`, access:
 - **Turbopack**: Faster development builds with Next.js 15
 - **Qdrant**: Sub-millisecond vector search performance
 - **Valkey**: High-throughput Redis-compatible caching
-- **React 19**: Improved rendering performance with concurrent features
