@@ -17,14 +17,20 @@ import { MemorySaver } from "@langchain/langgraph-checkpoint";
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
-import vectorStore from "./vectorStore";
+import vectorStore from "../utils/vectorStore";
 import { ChatMistralAI } from "@langchain/mistralai";
+import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 
 const memory = new MemorySaver();
 
-const model = new ChatMistralAI({
-  model: "mistral-small-latest",
-  apiKey: process.env.MISTRAL_API_KEY,
+// const model = new ChatMistralAI({
+//   model: "mistral-small-latest",
+//   apiKey: process.env.MISTRAL_API_KEY,
+// });
+
+const model = new ChatGoogleGenerativeAI({
+  model: "gemini-2.5-flash",
+  apiKey: process.env.GEMINI_API_KEY,
 });
 
 const GraphAnnotation = Annotation.Root({
@@ -95,7 +101,7 @@ Instructions:
         new HumanMessage(query),
       ]);
 
-      // console.log("PDF Retriever response:", response);
+      console.log("PDF Retriever response:", response);
 
       return response.content || "No relevant information found.";
     } catch (error) {
@@ -131,6 +137,7 @@ async function callModel(
   state: typeof GraphAnnotation.State
 ): Promise<Partial<typeof GraphAnnotation.State>> {
   const { messages, userId, selectedFileIds, summary } = state;
+  console.log(messages);
 
   // Get recent ToolMessages
   let recentToolMessages: ToolMessage[] = [];
@@ -143,13 +150,15 @@ async function callModel(
     }
   }
   let toolMessages = recentToolMessages.reverse();
+  console.log("Tool messages:", toolMessages);
 
   // Format tool messages content
   const docsContent = toolMessages.map((doc) => doc.content).join("\n");
 
   const SYSTEM_PROMPT = `You are a helpful AI Assistant who answers the user query based on the available PDF file context.
 
-
+Context:
+${docsContent}
 Instructions:
 - Answer based only on the provided context.
 - If the answer is not in the context, say so.
@@ -194,14 +203,20 @@ Selected Files: ${selectedFileIds.join(", ")}`;
     (message) =>
       message instanceof HumanMessage ||
       message instanceof SystemMessage ||
-      message instanceof AIMessage
+      (message instanceof AIMessage &&
+        message.tool_calls &&
+        message.tool_calls.length == 0)
   );
 
+  console.log("Conversation messages:", conversationMessages);
   // Add the rest of the conversation messages
   finalMessages = [...finalMessages, ...conversationMessages];
+  console.log("Final messages to model:", finalMessages);
 
   // Invoke the model
   const response = await modelWithTools.invoke(finalMessages);
+
+  console.log("Model response:", response);
   return {
     messages: [response],
     userId: userId,
