@@ -162,7 +162,7 @@ export default function Hero() {
         </span>
       </h1>
       <p className="text-lg md:text-2xl text-[var(--color-secondary)] max-w-2xl mb-8 relative z-10">
-        Documind lets you upload, search, and converse with your documents. Get
+        DocQ lets you upload, search, and converse with your documents. Get
         instant answers, summaries, and insights from your PDFs, all in a
         beautiful, secure, and intuitive interface.
       </p>

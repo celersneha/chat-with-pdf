@@ -101,7 +101,7 @@ Instructions:
         new HumanMessage(query),
       ]);
 
-      console.log("PDF Retriever response:", response);
+      // console.log("PDF Retriever response:", response);
 
       return response.content || "No relevant information found.";
     } catch (error) {
@@ -137,7 +137,7 @@ async function callModel(
   state: typeof GraphAnnotation.State
 ): Promise<Partial<typeof GraphAnnotation.State>> {
   const { messages, userId, selectedFileIds, summary } = state;
-  console.log(messages);
+  // console.log(messages);
 
   // Get recent ToolMessages
   let recentToolMessages: ToolMessage[] = [];
@@ -150,7 +150,7 @@ async function callModel(
     }
   }
   let toolMessages = recentToolMessages.reverse();
-  console.log("Tool messages:", toolMessages);
+  // console.log("Tool messages:", toolMessages);
 
   // Format tool messages content
   const docsContent = toolMessages.map((doc) => doc.content).join("\n");
@@ -208,15 +208,15 @@ Selected Files: ${selectedFileIds.join(", ")}`;
         message.tool_calls.length == 0)
   );
 
-  console.log("Conversation messages:", conversationMessages);
+  // console.log("Conversation messages:", conversationMessages);
   // Add the rest of the conversation messages
   finalMessages = [...finalMessages, ...conversationMessages];
-  console.log("Final messages to model:", finalMessages);
+  // console.log("Final messages to model:", finalMessages);
 
   // Invoke the model
   const response = await modelWithTools.invoke(finalMessages);
 
-  console.log("Model response:", response);
+  // console.log("Model response:", response);
   return {
     messages: [response],
     userId: userId,

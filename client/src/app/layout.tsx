@@ -10,7 +10,7 @@ import Loading from "@/components/custom-components/Loading";
 import RouteLoadingIndicator from "@/components/custom-components/RouteLoadingIndicator";
 
 export const metadata: Metadata = {
-  title: "Documind",
+  title: "DocQ",
   description: "Chat with your PDFs using AI",
 };
 

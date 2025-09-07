@@ -1,5 +1,5 @@
 import { getAuth } from "@clerk/express";
-import queue from "../lib/queue";
+import queue from "../utils/queue";
 import { users } from "../db/schema/user.schema";
 import { getUserById, canUploadFile } from "../services/user.services";
 import { db } from "../db";

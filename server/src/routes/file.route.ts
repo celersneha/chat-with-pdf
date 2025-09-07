@@ -5,7 +5,7 @@ import {
   deleteFile,
 } from "../controller/file.controller";
 import { Router } from "express";
-import upload from "../lib/multerStorage";
+import upload from "../utils/multerStorage";
 
 const router = Router();
 

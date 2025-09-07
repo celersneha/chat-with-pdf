@@ -62,6 +62,7 @@ const ChatComponent: React.FC<{ selectedFileIds: string[] }> = ({
     try {
       setIsLoading(true);
       setError(null);
+      setSummary(null);
       setMessages((prev) => [...prev, { role: "user", content: message }]);
 
       const token = await getToken();
@@ -73,7 +74,6 @@ const ChatComponent: React.FC<{ selectedFileIds: string[] }> = ({
       );
 
       const data = res.data;
-
       setMessages((prev) => [
         ...prev,
         {
@@ -83,7 +83,7 @@ const ChatComponent: React.FC<{ selectedFileIds: string[] }> = ({
         },
       ]);
       setMessage("");
-      setSummary(data?.summary || null);
+      setSummary(data?.data?.summary || null);
     } catch (error: any) {
       console.error("❌ Chat error:", error);
       if (error.response) {
@@ -122,12 +122,6 @@ const ChatComponent: React.FC<{ selectedFileIds: string[] }> = ({
         </h2>
       </div>
 
-      {/* Summary area */}
-      {summary && (
-        <div className="bg-[#fff0f3] border border-[#f43f5e]/30 text-[#c81e41] rounded-md px-4 py-2 m-4 mb-0 text-sm">
-          <strong>Summary:</strong> {summary}
-        </div>
-      )}
       {error && <div className="text-red-500 text-xs px-4 py-1">{error}</div>}
 
       {/* Messages Area */}
@@ -139,26 +133,27 @@ const ChatComponent: React.FC<{ selectedFileIds: string[] }> = ({
         )}
 
         {messages.map((msg, index) => (
-          <div
-            key={index}
-            className={`p-3 rounded-xl ${
-              msg.role === "user"
-                ? "bg-[var(--color-accent)]/10 text-[var(--color-accent)] ml-auto max-w-xs"
-                : "bg-[var(--color-primary)]/10 text-[var(--color-primary)] mr-auto max-w-md"
-            }`}
-          >
-            <div className="font-semibold capitalize mb-1">{msg.role}</div>
-            {msg.role === "assistant" ? (
-              <Streamdown>{msg.content || ""}</Streamdown>
-            ) : (
-              <div className="whitespace-pre-wrap">{msg.content}</div>
-            )}
-            {msg.documents && msg.documents.length > 0 && (
-              <div className="mt-2 text-xs opacity-70">
-                Sources: {msg.documents.length} documents
-              </div>
-            )}
-          </div>
+          <React.Fragment key={index}>
+            <div
+              className={`p-3 rounded-xl ${
+                msg.role === "user"
+                  ? "bg-[var(--color-accent)]/10 text-[var(--color-accent)] ml-auto max-w-xs"
+                  : "bg-[var(--color-primary)]/10 text-[var(--color-primary)] mr-auto max-w-md"
+              }`}
+            >
+              <div className="font-semibold capitalize mb-1">{msg.role}</div>
+              {msg.role === "assistant" ? (
+                <Streamdown>{msg.content || ""}</Streamdown>
+              ) : (
+                <div className="whitespace-pre-wrap">{msg.content}</div>
+              )}
+              {msg.documents && msg.documents.length > 0 && (
+                <div className="mt-2 text-xs opacity-70">
+                  Sources: {msg.documents.length} documents
+                </div>
+              )}
+            </div>
+          </React.Fragment>
         ))}
 
         {/* Loading indicator */}
@@ -181,6 +176,14 @@ const ChatComponent: React.FC<{ selectedFileIds: string[] }> = ({
             </div>
           </div>
         )}
+
+        {/* Show summary at end of chat window */}
+        {summary !== null && summary.trim().length > 0 && (
+          <div className="bg-[#fff0f3] border border-[#f43f5e]/30 text-[#c81e41] rounded-md px-4 py-2 my-2 text-sm max-w-md mr-auto">
+            <strong>Summary:</strong> {summary}
+          </div>
+        )}
+
         <div ref={messagesEndRef} />
       </div>
 

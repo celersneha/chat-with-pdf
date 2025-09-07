@@ -92,7 +92,7 @@ export default function Footer() {
               <div className="flex flex-col items-center space-y-2 mb-2 md:mb-0">
                 <Image
                   src="/logo.png"
-                  alt="Documind Logo"
+                  alt="DocQ Logo"
                   width={48}
                   height={48}
                   className="w-12 h-12 sm:w-20 sm:h-20 mb-1"
@@ -109,7 +109,7 @@ export default function Footer() {
           <p>
             &copy; {new Date().getFullYear()}{" "}
             <span className="text-[var(--color-primary)] font-semibold">
-              Documind
+              DocQ
             </span>
             . All rights reserved.
           </p>

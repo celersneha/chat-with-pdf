@@ -39,9 +39,9 @@ export default function Header() {
       <header className="w-full px-6 py-4 flex items-center justify-between border-b border-[var(--color-secondary)]/20 bg-[var(--color-background)]/80 backdrop-blur fixed top-0 z-50">
         <Link href="/" className="flex items-center gap-3">
           <div className="flex items-center gap-1">
-            <Image src="/logo.png" alt="Documind Logo" width={50} height={50} />
+            <Image src="/logo.png" alt="DocQ Logo" width={50} height={50} />
             <span className="text-2xl font-bold text-[var(--color-primary)] tracking-tight">
-              Documind
+              DocQ
             </span>
           </div>
         </Link>

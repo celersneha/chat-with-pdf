@@ -2,7 +2,7 @@ import { db } from "../db";
 import { users } from "../db/schema/user.schema";
 import { getUserById } from "./user.services";
 import { eq } from "drizzle-orm";
-import queue from "../lib/queue"; // Apne queue ka import path sahi karein
+import queue from "../utils/queue"; // Apne queue ka import path sahi karein
 
 export const deleteFile = async (userId: any, fileId: any) => {
   const user = await getUserById(userId);

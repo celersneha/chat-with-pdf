@@ -6,7 +6,7 @@ export default function HowItWorks() {
       <div className="w-1/2 mx-auto border-b-2 border-[#F43F5E] rounded-full mb-12 opacity-80" />
       <div className="max-w-4xl mx-auto px-4">
         <h2 className="text-3xl font-bold mb-8 text-center text-[var(--color-text)]">
-          How Documind Works
+          How DocQ Works
         </h2>
         <ol className="space-y-8 text-left">
           <li className="flex items-start gap-4">
