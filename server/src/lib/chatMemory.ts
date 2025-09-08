@@ -65,16 +65,35 @@ const pdfRetriever = tool(
     }
 
     // Create filter matching your existing chat controller logic
-    const filter = {
-      must: [
-        { key: "metadata.userId", match: { value: userId } },
-        { key: "metadata.fileId", match: { any: fileIds } },
-      ],
-    };
+    const isProd = process.env.NODE_ENV === "production";
+
+    let filter;
+
+    if (isProd) {
+      // ChromaDB filter format
+      filter = {
+        $and: [
+          { "metadata.userId": { $eq: userId } },
+          { "metadata.fileId": { $in: fileIds } },
+        ],
+      };
+    } else {
+      // Qdrant filter format
+      filter = {
+        must: [
+          { key: "metadata.userId", match: { value: userId } },
+          { key: "metadata.fileId", match: { any: fileIds } },
+        ],
+      };
+    }
 
     try {
-      // Use 5 docs as per your existing controller (adjustable)
-      const results = await vectorStore.similaritySearch(query, 5, filter);
+      // Use single filter for both environments
+      const results = await vectorStore.similaritySearch(
+        query,
+        5,
+        filter as any
+      );
 
       if (results.length === 0) {
         return "No relevant content found in the selected files. Please try rephrasing your question or selecting different files.";
