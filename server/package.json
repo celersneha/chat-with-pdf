@@ -7,13 +7,16 @@
     "@types/bun": "latest",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
-    "@types/multer": "^2.0.0"
+    "@types/multer": "^2.0.0",
+    "cross-env": "^10.0.0"
   },
   "scripts": {
     "start": "bun run src/index.ts",
     "dev": "bun --watch run src/index.ts",
     "dev:worker": "bun --watch run worker.ts",
-    "db:push": "bunx drizzle-kit push --config=drizzle.config.ts"
+    "db:push": "bunx drizzle-kit push --config=drizzle.config.ts",
+    "prod": "bun --env-file=.env.production run src/index.ts",
+    "prod:worker": "bun --env-file=.env.production run worker.ts"
   },
   "peerDependencies": {
     "typescript": "^5"
