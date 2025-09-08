@@ -1,10 +1,28 @@
+import { config as dotenvConfig } from "dotenv";
+dotenvConfig({ path: ".env.production" });
 import { defineConfig } from "drizzle-kit";
 
-export default defineConfig({
-  out: "./drizzle",
-  schema: "./src/db/schema/*",
-  dialect: "postgresql",
-  dbCredentials: {
-    url: process.env.DATABASE_URL!,
-  },
-});
+console.log("DATABASE_URL:", process.env.DATABASE_URL);
+
+const config =
+  process.env.NODE_ENV === "production"
+    ? defineConfig({
+        schema: "./src/db/schema/*",
+        out: "./supabase/migrations",
+        dialect: "postgresql",
+        dbCredentials: {
+          url: process.env.DATABASE_URL!,
+          ssl: { rejectUnauthorized: false },
+        },
+      })
+    : defineConfig({
+        out: "./drizzle",
+        schema: "./src/db/schema/*",
+        dialect: "postgresql",
+        dbCredentials: {
+          url: process.env.DATABASE_URL!,
+          ssl: { rejectUnauthorized: false },
+        },
+      });
+
+export default config;
