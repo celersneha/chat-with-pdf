@@ -1,4 +1,4 @@
-# DocQ
+# pdfiq
 
 A sophisticated full-stack application that enables users to upload PDF documents and engage in intelligent conversations using AI. Built with Next.js 15, Bun runtime, and powered by Mistral AI with advanced vector search capabilities through Qdrant.
 

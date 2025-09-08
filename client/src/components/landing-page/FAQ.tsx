@@ -10,7 +10,7 @@ export default function FAQSection() {
         </h2>
         <div className="space-y-6">
           <FAQ
-            question="Is DocQ free to use?"
+            question="Is pdfiq free to use?"
             answer="Yes! You can get started for free. Some advanced features may require a subscription in the future."
           />
           <FAQ
@@ -22,8 +22,8 @@ export default function FAQSection() {
             answer="Yes, you can select multiple documents to include in your chat context for richer, cross-document answers."
           />
           <FAQ
-            question="Which AI model powers DocQ?"
-            answer="DocQ uses advanced large language models for accurate and context-aware responses."
+            question="Which AI model powers pdfiq?"
+            answer="pdfiq uses advanced large language models for accurate and context-aware responses."
           />
         </div>
       </div>
