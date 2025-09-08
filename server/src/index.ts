@@ -1,9 +1,9 @@
 import express from "express";
 import cors from "cors";
 import { clerkMiddleware } from "@clerk/express";
-import fileRoutes from "../src/routes/file.route";
-import chatRoutes from "../src/routes/chat.route";
-import userRoutes from "../src/routes/user.route";
+import fileRoutes from "./routes/file.route";
+import chatRoutes from "./routes/chat.route";
+import userRoutes from "./routes/user.route";
 
 // Extend Express Request type to include 'auth'
 declare global {
