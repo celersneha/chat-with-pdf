@@ -4,6 +4,9 @@ import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
 import vectorStore from "./src/utils/vectorStore";
 import fs from "fs";
 import path from "path";
+import { randomUUID } from "crypto";
+
+const isProd = process.env.NODE_ENV === "production";
 
 const worker = new Worker(
   "file-processing-queue",
@@ -22,8 +25,9 @@ const worker = new Worker(
 
       const splits = await splitter.splitDocuments(docs);
 
-      const documentsWithMetadata = splits.map((doc) => ({
+      const documentsWithMetadata = splits.map((doc, idx) => ({
         ...doc,
+        id: randomUUID(),
         metadata: {
           ...doc.metadata,
           fileId: data.fileId,
@@ -32,7 +36,11 @@ const worker = new Worker(
         },
       }));
 
-      await vectorStore.addDocuments(documentsWithMetadata);
+      try {
+        await vectorStore.addDocuments(documentsWithMetadata);
+      } catch (error) {
+        console.error("❌ Error adding documents:", error);
+      }
 
       const jobObject = JSON.parse(job.data);
 
@@ -49,18 +57,46 @@ const worker = new Worker(
     if (job.name === "delete-vector-docs") {
       const { userId, fileId } = JSON.parse(job.data);
 
-      await vectorStore.delete({
-        filter: {
-          must: [
-            { key: "metadata.fileId", match: { value: fileId } },
-            { key: "metadata.userId", match: { value: userId } },
-          ],
-        },
-      });
+      try {
+        if (isProd) {
+          // ChromaDB delete format
+          const chromaFilter = {
+            $and: [
+              { "metadata.fileId": { $eq: fileId } },
+              { "metadata.userId": { $eq: userId } },
+            ],
+          };
+          const result = await vectorStore.delete(chromaFilter as any);
+        } else {
+          // Qdrant delete format
+          const qdrantFilter = {
+            filter: {
+              must: [
+                { key: "metadata.fileId", match: { value: fileId } },
+                { key: "metadata.userId", match: { value: userId } },
+              ],
+            },
+          };
+          await vectorStore.delete(qdrantFilter as any);
+        }
+      } catch (error) {
+        console.error("❌ Error deleting vectors:", error);
+      }
     }
   },
   {
     concurrency: 100,
-    connection: { host: "localhost", port: 6379 },
+    connection: isProd
+      ? {
+          host: process.env.UPSTASH_REDIS_REST_URL,
+          password: process.env.UPSTASH_REDIS_REST_TOKEN,
+          tls: {},
+        }
+      : {
+          host: "localhost",
+          port: 6379,
+        },
   }
 );
+
+export default worker;
