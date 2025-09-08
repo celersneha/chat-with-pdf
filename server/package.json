@@ -10,8 +10,8 @@
     "@types/multer": "^2.0.0"
   },
   "scripts": {
-    "start": "bun run index.ts",
-    "dev": "bun --watch run index.ts",
+    "start": "bun run src/index.ts",
+    "dev": "bun --watch run src/index.ts",
     "dev:worker": "bun --watch run worker.ts",
     "db:push": "bunx drizzle-kit push --config=drizzle.config.ts"
   },
