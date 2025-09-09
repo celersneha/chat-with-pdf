@@ -1,55 +1,16 @@
 import { db } from "../db/index.js";
 import { users } from "../db/schema/user.schema.js";
-import { getUserById } from "./user.services.js";
 import { eq } from "drizzle-orm";
+import { getUserById } from "./user.services.js";
 import queue from "../utils/queue.js";
-import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
-import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import vectorStore from "../utils/vectorStore.js";
+import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
+import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
 import fs from "fs";
-import path from "path";
 import { randomUUID } from "crypto";
+import { deleteFromFilebase } from "../utils/filebase.js"; // <-- Changed import
 
 const isProd = process.env.NODE_ENV === "production";
-
-export const deleteFile = async (userId: any, fileId: any) => {
-  const user = await getUserById(userId);
-
-  if (!user) {
-    throw new Error("User not found");
-  }
-
-  if (Array.isArray(user.files)) {
-    user.files = user.files.filter((file: any) => file.fileId !== fileId);
-  } else {
-    user.files = [];
-  }
-
-  const files = user.files as Array<{ fileId: any }>;
-
-  const updatedUser = await db
-    .update(users)
-    .set({ files: files, uploadedFileCount: files.length })
-    .where(eq(users.userid, userId))
-    .returning();
-
-  const jobData = {
-    userId,
-    fileId,
-  };
-
-  if (isProd) {
-    // QStash: Send webhook
-    await queue.publish({
-      url: process.env.QSTASH_DELETE_VECTOR_DOCS_WEBHOOK_URL,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(jobData),
-    });
-  } else {
-    // BullMQ: Add job to queue
-    await queue.add("delete-vector-docs", jobData);
-  }
-};
 
 export const updateDBWithUploadedFile = async (
   userId: string,
@@ -57,23 +18,44 @@ export const updateDBWithUploadedFile = async (
   fileId: string
 ) => {
   const user = await getUserById(userId);
-  const newFile = { fileName, fileId };
-  const updatedFiles = Array.isArray(user?.files)
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  const newFile = {
+    fileId,
+    fileName,
+    uploadedAt: new Date().toISOString(),
+  };
+
+  const files = Array.isArray(user.files)
     ? [...user.files, newFile]
     : [newFile];
-  const updatedFileCount = (user?.uploadedFileCount ?? 0) + 1;
 
   await db
     .update(users)
-    .set({
-      uploadedFileCount: updatedFileCount,
-      files: updatedFiles,
-    })
+    .set({ files: files, uploadedFileCount: files.length })
     .where(eq(users.userid, userId));
 };
 
 export const processFileReadyService = async (data: any) => {
-  const loader = new PDFLoader(data.path);
+  console.log("Processing file ready service:", data);
+
+  // Use Filebase URL instead of Firebase URL
+  const response = await fetch(data.filebaseUrl); // <-- Changed from data.firebaseUrl
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch PDF: ${response.statusText}`);
+  }
+
+  const arrayBuffer = await response.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+
+  const tempPath = `/tmp/${data.fileId}.pdf`;
+  fs.writeFileSync(tempPath, buffer);
+
+  const loader = new PDFLoader(tempPath);
   const docs = await loader.load();
 
   const splitter = new RecursiveCharacterTextSplitter({
@@ -94,23 +76,22 @@ export const processFileReadyService = async (data: any) => {
     },
   }));
 
-  await vectorStore.addDocuments(documentsWithMetadata);
-
-  // File delete logic (optional)
-  if (data.path) {
-    const normalizedPath = path.resolve(data.path);
-    fs.unlink(normalizedPath, (err) => {
-      if (err) {
-        console.error("File delete error:", err);
-      }
-    });
+  try {
+    await vectorStore.addDocuments(documentsWithMetadata);
+    console.log("✅ Documents added to vector store successfully");
+  } catch (error) {
+    console.error("❌ Error adding documents to vector store:", error);
   }
+
+  // Clean up temp file
+  fs.unlink(tempPath, (err) => {
+    if (err) console.error("Temp file delete error:", err);
+  });
 };
 
-export const processDeleteVectorDocsService = async (
-  userId: string,
-  fileId: string
-) => {
+export const processDeleteVectorDocsService = async (data: any) => {
+  const { userId, fileId } = data;
+
   // ChromaDB delete format (production)
   const chromaFilter = {
     $and: [
@@ -119,7 +100,60 @@ export const processDeleteVectorDocsService = async (
     ],
   };
 
-  if (process.env.NODE_ENV === "production") {
+  try {
     await vectorStore.delete(chromaFilter as any);
+    console.log("✅ Vector documents deleted successfully (ChromaDB)");
+  } catch (error) {
+    console.error("❌ Error deleting vectors (ChromaDB):", error);
+  }
+};
+
+export const deleteFile = async (userId: any, fileId: any) => {
+  const user = await getUserById(userId);
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  // Find file to get Filebase key for deletion
+  const fileArray: Array<any> = Array.isArray(user.files) ? user.files : [];
+  const fileToDelete = fileArray.find((file: any) => file.fileId === fileId);
+
+  if (Array.isArray(user.files)) {
+    user.files = user.files.filter((file: any) => file.fileId !== fileId);
+  } else {
+    user.files = [];
+  }
+
+  const files = user.files as Array<{ fileId: any }>;
+
+  await db
+    .update(users)
+    .set({ files: files, uploadedFileCount: files.length })
+    .where(eq(users.userid, userId))
+    .returning();
+
+  // Delete from Filebase Storage if file info available
+  if (fileToDelete?.filebaseKey) {
+    try {
+      await deleteFromFilebase(fileToDelete.filebaseKey);
+    } catch (error) {
+      console.error("Error deleting from Filebase:", error);
+    }
+  }
+
+  const jobData = {
+    userId,
+    fileId,
+  };
+
+  if (isProd) {
+    await queue.publish({
+      url: process.env.QSTASH_DELETE_VECTOR_DOCS_WEBHOOK_URL,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(jobData),
+    });
+  } else {
+    await queue.add("delete-vector-docs", jobData);
   }
 };
