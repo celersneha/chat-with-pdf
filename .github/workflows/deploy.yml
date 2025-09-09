@@ -1,0 +1,31 @@
+name: Conditional Deploy to Vercel
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Detect changes & deploy
+        run: |
+          CLIENT_CHANGED=$(git diff --name-only HEAD^ HEAD | grep '^client/' || true)
+          SERVER_CHANGED=$(git diff --name-only HEAD^ HEAD | grep '^server/' || true)
+
+          if [ -n "$CLIENT_CHANGED" ]; then
+            echo "🚀 Deploying client..."
+            curl -X POST ${{ secrets.VERCEL_CLIENT_DEPLOY_HOOK }}
+          else
+            echo "✅ No client changes."
+          fi
+
+          if [ -n "$SERVER_CHANGED" ]; then
+            echo "🚀 Deploying server..."
+            curl -X POST ${{ secrets.VERCEL_SERVER_DEPLOY_HOOK }}
+          else
+            echo "✅ No server changes."
+          fi
