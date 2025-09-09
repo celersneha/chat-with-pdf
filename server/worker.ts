@@ -11,9 +11,9 @@ const isProd = process.env.NODE_ENV === "production";
 const worker = new Worker(
   "file-processing-queue",
   async (job) => {
+    // console.log("Processing file:", job);
     if (job.name === "file-ready") {
-      const data = JSON.parse(job.data);
-
+      const data = job.data;
       const loader = new PDFLoader(data.path);
 
       const docs = await loader.load();
@@ -55,7 +55,7 @@ const worker = new Worker(
     }
 
     if (job.name === "delete-vector-docs") {
-      const { userId, fileId } = JSON.parse(job.data);
+      const { userId, fileId } = job.data;
 
       try {
         if (isProd) {
