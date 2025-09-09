@@ -4,7 +4,11 @@ import { getUserById, canUploadFile } from "../services/user.services.js";
 import {
   deleteFile as deleteFileService,
   updateDBWithUploadedFile,
+  processFileReadyService,
+  processDeleteVectorDocsService,
 } from "../services/file.services.js";
+
+const isProd = process.env.NODE_ENV === "production";
 
 export const uploadFile = async (req: any, res: any) => {
   try {
@@ -14,7 +18,6 @@ export const uploadFile = async (req: any, res: any) => {
       return res.status(401).json({ error: "Unauthorized: userId not found" });
     }
 
-    // check the uploaded file count
     const user = await getUserById(userId);
 
     if (!user) {
@@ -24,7 +27,6 @@ export const uploadFile = async (req: any, res: any) => {
     if (!canUploadFile(user))
       return res.status(403).json({ error: "File upload limit reached" });
 
-    // ✅ Ek hi fileId generate karo
     const fileId = `${userId}-${Date.now()}`;
     const fileName = req.file?.originalname;
 
@@ -38,9 +40,18 @@ export const uploadFile = async (req: any, res: any) => {
       fileName: fileName,
       userId: userId,
     };
-
-    await queue.add("file-ready", JSON.stringify(jobData));
-
+    console.log(jobData);
+    if (isProd) {
+      console.log("Production mode: sending to QStash");
+      await queue.publish({
+        url: process.env.QSTASH_FILE_READY_WEBHOOK_URL,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(jobData),
+      });
+    } else {
+      console.log("Development mode: adding to BullMQ");
+      await queue.add("file-ready", jobData);
+    }
     res.json({ message: "File uploaded successfully" });
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
@@ -79,6 +90,28 @@ export const deleteFile = async (req: any, res: any) => {
 
     res.json({ message: "File deleted successfully" });
   } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const processFileReady = async (req: any, res: any) => {
+  try {
+    await processFileReadyService(req.body);
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error("Error processing file-ready:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const processDeleteVectorDocs = async (req: any, res: any) => {
+  try {
+    const { userId } = req.body;
+    const { fileId } = req.params;
+    await processDeleteVectorDocsService(userId, fileId);
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error("Error deleting vectors:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
