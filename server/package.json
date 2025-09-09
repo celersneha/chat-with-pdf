@@ -31,6 +31,7 @@
     "@langchain/mistralai": "^0.2.1",
     "@langchain/qdrant": "^0.1.3",
     "@mistralai/mistralai": "^1.9.17",
+    "@upstash/qstash": "^2.8.2",
     "bullmq": "^5.58.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
