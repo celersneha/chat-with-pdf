@@ -1,6 +1,6 @@
 import { getAuth } from "@clerk/express";
-import queue from "../utils/queue";
-import { getUserById, canUploadFile } from "../services/user.services";
+import queue from "../utils/queue.js";
+import { getUserById, canUploadFile } from "../services/user.services.js";
 import {
   deleteFile as deleteFileService,
   updateDBWithUploadedFile,

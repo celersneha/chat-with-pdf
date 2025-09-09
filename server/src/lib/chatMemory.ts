@@ -17,7 +17,7 @@ import { MemorySaver } from "@langchain/langgraph-checkpoint";
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
-import vectorStore from "../utils/vectorStore";
+import vectorStore from "../utils/vectorStore.js";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 
 const memory = new MemorySaver();

@@ -1,5 +1,5 @@
 import { getAuth } from "@clerk/express";
-import { appGraph } from "../lib/chatMemory";
+import { appGraph } from "../lib/chatMemory.js";
 import { HumanMessage } from "@langchain/core/messages";
 import { z } from "zod";
 
