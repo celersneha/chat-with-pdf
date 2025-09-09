@@ -1,0 +1,9 @@
+{
+  "builds": [
+    {
+      "src": "server/package.json",
+      "use": "@vercel/static-build",
+      "config": { "distDir": "server/dist" }
+    }
+  ]
+}

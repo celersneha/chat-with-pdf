@@ -11,7 +11,8 @@
     "cross-env": "^10.0.0"
   },
   "scripts": {
-    "start": "bun run src/index.ts",
+    "build": "bun build src/index.ts --outdir dist --target bun",
+    "start": "bun run dist/index.js",
     "dev": "bun --watch run src/index.ts",
     "dev:worker": "bun --watch run worker.ts",
     "db:push": "bunx drizzle-kit push --config=drizzle.config.ts",
