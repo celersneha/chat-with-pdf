@@ -1,10 +1,11 @@
 import express from "express";
 import cors from "cors";
 import { clerkMiddleware } from "@clerk/express";
-import fileRoutes from "./routes/file.route";
-import chatRoutes from "./routes/chat.route";
-import userRoutes from "./routes/user.route";
+import fileRoutes from "./routes/file.route.js";
+import chatRoutes from "./routes/chat.route.js";
+import userRoutes from "./routes/user.route.js";
 
+const PORT = process.env.PORT || 8000;
 // Extend Express Request type to include 'auth'
 declare global {
   namespace Express {
@@ -46,7 +47,7 @@ app.use(
   }
 );
 
-app.listen(8000, () => {
+app.listen(PORT, () => {
   console.log("🚀 Server is running on http://localhost:8000");
 });
 

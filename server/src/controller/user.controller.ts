@@ -1,7 +1,7 @@
 import express from "express";
 import { db } from "../db";
 import { eq } from "drizzle-orm";
-import { users } from "../db/schema/user.schema";
+import { users } from "../db/schema/user.schema.js";
 
 export const registerUser = async (req: any, res: any) => {
   try {

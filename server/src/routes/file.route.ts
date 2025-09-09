@@ -3,9 +3,9 @@ import {
   uploadFile,
   getFilesOfCurrentUser,
   deleteFile,
-} from "../controller/file.controller";
+} from "../controller/file.controller.js";
 import { Router } from "express";
-import upload from "../utils/multerStorage";
+import upload from "../utils/multerStorage.js";
 
 const router = Router();
 

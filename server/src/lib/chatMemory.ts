@@ -18,7 +18,6 @@ import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
 import vectorStore from "../utils/vectorStore";
-import { ChatMistralAI } from "@langchain/mistralai";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 
 const memory = new MemorySaver();

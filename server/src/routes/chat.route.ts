@@ -1,5 +1,5 @@
 import { requireAuth } from "@clerk/express";
-import { chat } from "../controller/chat.controller";
+import { chat } from "../controller/chat.controller.js";
 import { Router } from "express";
 
 const router = Router();

@@ -1,7 +1,6 @@
 import { getAuth } from "@clerk/express";
-import { appGraph, GraphAnnotation } from "../lib/chatMemory";
+import { appGraph } from "../lib/chatMemory";
 import { HumanMessage } from "@langchain/core/messages";
-import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
 
 // Request validation schema

@@ -1,13 +1,10 @@
 import { getAuth } from "@clerk/express";
 import queue from "../utils/queue";
-import { users } from "../db/schema/user.schema";
 import { getUserById, canUploadFile } from "../services/user.services";
-import { db } from "../db";
 import {
   deleteFile as deleteFileService,
   updateDBWithUploadedFile,
-} from "../services/file.services";
-import { eq } from "drizzle-orm";
+} from "../services/file.services.js";
 
 export const uploadFile = async (req: any, res: any) => {
   try {

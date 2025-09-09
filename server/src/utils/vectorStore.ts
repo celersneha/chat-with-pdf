@@ -1,5 +1,5 @@
 import { QdrantVectorStore } from "@langchain/qdrant";
-import embeddings from "./embedding";
+import embeddings from "./embedding.js";
 import { Chroma } from "@langchain/community/vectorstores/chroma";
 
 const isProd = process.env.NODE_ENV === "production";

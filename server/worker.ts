@@ -1,7 +1,7 @@
 import { Worker } from "bullmq";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
-import vectorStore from "./src/utils/vectorStore";
+import vectorStore from "./src/utils/vectorStore.js";
 import fs from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
