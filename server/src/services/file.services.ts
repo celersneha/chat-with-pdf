@@ -9,6 +9,8 @@ import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
 import fs from "fs";
 import { randomUUID } from "crypto";
 import { deleteFromFilebase } from "../utils/filebase.js"; // <-- Changed import
+import os from "os";
+import path from "path";
 
 const isProd = process.env.NODE_ENV === "production";
 
@@ -42,8 +44,10 @@ export const updateDBWithUploadedFile = async (
 export const processFileReadyService = async (data: any) => {
   console.log("Processing file ready service:", data);
 
-  // Use Filebase URL instead of Firebase URL
-  const response = await fetch(data.filebaseUrl); // <-- Changed from data.firebaseUrl
+  // Use IPFS URL instead of Filebase S3 URL (which is private)
+  const fileUrl = data.ipfsUrl || data.filebaseUrl; // Prefer IPFS URL
+
+  const response = await fetch(fileUrl);
 
   if (!response.ok) {
     throw new Error(`Failed to fetch PDF: ${response.statusText}`);
@@ -52,7 +56,8 @@ export const processFileReadyService = async (data: any) => {
   const arrayBuffer = await response.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
 
-  const tempPath = `/tmp/${data.fileId}.pdf`;
+  // Use os.tmpdir() for cross-platform compatibility
+  const tempPath = path.join(os.tmpdir(), `${data.fileId}.pdf`);
   fs.writeFileSync(tempPath, buffer);
 
   const loader = new PDFLoader(tempPath);
