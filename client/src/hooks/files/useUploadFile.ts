@@ -7,12 +7,18 @@ export const useUploadFile = () => {
   const { getToken } = useAuth();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (formData: FormData) => {
+    mutationFn: async (file: File) => {
       const token = await getToken();
       const api = axiosInstance(token ?? undefined);
-      return api.post("/api/files/upload", formData);
+      const bytes = await file.arrayBuffer();
+      const buffer = Array.from(new Uint8Array(bytes));
+      return api.post("/api/files/upload", {
+        file: buffer,
+        fileName: file.name,
+        fileType: file.type,
+      });
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast("File uploaded successfully");
       queryClient.invalidateQueries({ queryKey: ["files"] });
     },
