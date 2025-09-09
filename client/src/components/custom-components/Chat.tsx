@@ -69,7 +69,7 @@ const ChatComponent: React.FC<{ selectedFileIds: string[] }> = ({
       const api = axiosInstance(token ?? undefined);
 
       const res = await api.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/chat/chat-with-pdf`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/chat/chat-with-pdf`,
         { message, fileIds: selectedFileIds, sessionId }
       );
 

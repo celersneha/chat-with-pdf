@@ -8,11 +8,14 @@ export default function RegisterUserOnSignIn() {
 
   useEffect(() => {
     if (isSignedIn && user) {
-      axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/user/register-user`, {
-        userId: user.id,
-        email: user.primaryEmailAddress?.emailAddress,
-        firstName: user.firstName,
-      });
+      axios.post(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/user/register-user`,
+        {
+          userId: user.id,
+          email: user.primaryEmailAddress?.emailAddress,
+          firstName: user.firstName,
+        }
+      );
     }
   }, [isSignedIn, user]);
 
