@@ -1,9 +1,7 @@
 {
-  "builds": [
-    {
-      "src": "server/package.json",
-      "use": "@vercel/static-build",
-      "config": { "distDir": "server/dist" }
+  "functions": {
+    "src/index.ts": {
+      "runtime": "vercel-bun@1.0.0"
     }
-  ]
+  }
 }
