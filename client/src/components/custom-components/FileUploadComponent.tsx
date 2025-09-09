@@ -53,9 +53,7 @@ const FileUploadComponent: React.FC<FileUploadComponentProps> = ({
     if (files && files.length > 0) {
       const file = files.item(0);
       if (file) {
-        const formData = new FormData();
-        formData.append("pdf", file);
-        uploadMutation.mutate(formData);
+        uploadMutation.mutate(file);
       }
     }
     if (fileInputRef.current) fileInputRef.current.value = "";
