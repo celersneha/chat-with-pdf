@@ -2,8 +2,6 @@ import { config as dotenvConfig } from "dotenv";
 dotenvConfig({ path: ".env.production" });
 import { defineConfig } from "drizzle-kit";
 
-console.log("DATABASE_URL:", process.env.DATABASE_URL);
-
 const config =
   process.env.NODE_ENV === "production"
     ? defineConfig({
