@@ -54,6 +54,7 @@ export const uploadFile = async (req: any, res: any) => {
     }
     res.json({ message: "File uploaded successfully" });
   } catch (error) {
+    console.error("Upload file error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
