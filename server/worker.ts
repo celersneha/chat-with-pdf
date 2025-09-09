@@ -5,19 +5,37 @@ import vectorStore from "./src/utils/vectorStore.js";
 import fs from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
+import os from "os";
 
 const isProd = process.env.NODE_ENV === "production";
 
 const worker = new Worker(
   "file-processing-queue",
   async (job) => {
-    // console.log("Processing file:", job);
     if (job.name === "file-ready") {
       const data = job.data;
-      const loader = new PDFLoader(data.path);
+      // Use Filebase URL instead of Firebase URL
+      if (!data.filebaseUrl) {
+        console.error("No filebaseUrl found in job data");
+        return;
+      }
 
+      const response = await fetch(data.ipfsUrl);
+      if (!response.ok) {
+        console.error(`Failed to fetch PDF: ${response.statusText}`);
+        return;
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+
+      // Save buffer to temp file
+      const tempPath = path.join(os.tmpdir(), `${data.fileId}.pdf`);
+      fs.writeFileSync(tempPath, buffer);
+
+      // Load PDF from temp file
+      const loader = new PDFLoader(tempPath);
       const docs = await loader.load();
-
       const splitter = new RecursiveCharacterTextSplitter({
         chunkSize: 500,
         chunkOverlap: 100,
@@ -35,23 +53,18 @@ const worker = new Worker(
           userId: data.userId,
         },
       }));
-
       try {
         await vectorStore.addDocuments(documentsWithMetadata);
       } catch (error) {
         console.error("❌ Error adding documents:", error);
       }
 
-      const jobObject = JSON.parse(job.data);
-
-      if (jobObject.path) {
-        const normalizedPath = path.resolve(jobObject.path);
-        fs.unlink(normalizedPath, (err: any) => {
-          if (err) {
-            console.error("File delete error:", err);
-          }
-        });
-      }
+      // Clean up temp file
+      fs.unlink(tempPath, (err: any) => {
+        if (err) {
+          console.error("File delete error:", err);
+        }
+      });
     }
 
     if (job.name === "delete-vector-docs") {
