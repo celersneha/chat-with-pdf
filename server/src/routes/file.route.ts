@@ -6,12 +6,11 @@ import {
   processFileReady,
   processDeleteVectorDocs,
 } from "../controller/file.controller.js";
-import { Router } from "express";
-import upload from "../utils/multerStorage.js";
+import { Router, raw } from "express"; // <-- raw imported here
 
 const router = Router();
 
-router.route("/upload").post(requireAuth(), upload.single("pdf"), uploadFile);
+router.route("/upload").post(requireAuth(), uploadFile);
 router.route("/get-files").get(requireAuth(), getFilesOfCurrentUser);
 router.route("/delete-file/:fileId").delete(requireAuth(), deleteFile);
 
