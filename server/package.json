@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "@clerk/express": "^1.7.21",
-    "@langchain/community": "^0.3.51",
+    "@langchain/community": "^0.3.55",
     "@langchain/core": "^0.3.72",
     "@langchain/google-genai": "^0.2.17",
     "@langchain/langgraph": "^0.4.8",
@@ -34,6 +34,7 @@
     "@upstash/qstash": "^2.8.2",
     "aws-sdk": "^2.1692.0",
     "bullmq": "^5.58.0",
+    "chromadb": "^3.0.14",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
     "drizzle-kit": "^0.31.4",
