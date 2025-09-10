@@ -69,7 +69,6 @@ const pdfRetriever = tool(
     let filter;
 
     if (isProd) {
-      // ChromaDB filter format
       filter = {
         $and: [
           { "metadata.userId": { $eq: userId } },
