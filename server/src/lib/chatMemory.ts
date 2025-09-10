@@ -70,10 +70,8 @@ const pdfRetriever = tool(
 
     if (isProd) {
       filter = {
-        $and: [
-          { "metadata.userId": { $eq: userId } },
-          { "metadata.fileId": { $in: fileIds } },
-        ],
+        userId: { $eq: userId }, // exact match
+        fileId: { $in: fileIds }, // array of file IDs
       };
     } else {
       // Qdrant filter format
@@ -87,18 +85,15 @@ const pdfRetriever = tool(
 
     try {
       // Use single filter for both environments
-      const results = await vectorStore.similaritySearch(
-        query,
-        5,
-        filter as any
-      );
+      const store = await vectorStore;
+      const results = await store.similaritySearch(query, 5, filter as any);
 
       if (results.length === 0) {
         return "No relevant content found in the selected files. Please try rephrasing your question or selecting different files.";
       }
 
       // Extract page contents matching your existing logic
-      const pageContents = results.map((doc) => doc.pageContent);
+      const pageContents = results.map((doc: any) => doc.pageContent);
       const contextText = pageContents.join("\n---\n");
 
       // Use your existing system prompt pattern
