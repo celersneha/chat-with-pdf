@@ -8,7 +8,7 @@ import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
 import fs from "fs";
 import { randomUUID } from "crypto";
-import { deleteFromFilebase } from "../utils/filebase.js"; // <-- Changed import
+import { deleteFromFilebase } from "../utils/filebase.js";
 import os from "os";
 import path from "path";
 
@@ -44,9 +44,7 @@ export const updateDBWithUploadedFile = async (
 export const processFileReadyService = async (data: any) => {
   console.log("Processing file ready service:", data);
 
-  // Use IPFS URL instead of Filebase S3 URL (which is private)
-  const fileUrl = data.ipfsUrl || data.filebaseUrl; // Prefer IPFS URL
-
+  const fileUrl = data.ipfsUrl || data.filebaseUrl;
   const response = await fetch(fileUrl);
 
   if (!response.ok) {
@@ -56,7 +54,6 @@ export const processFileReadyService = async (data: any) => {
   const arrayBuffer = await response.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
 
-  // Use os.tmpdir() for cross-platform compatibility
   const tempPath = path.join(os.tmpdir(), `${data.fileId}.pdf`);
   fs.writeFileSync(tempPath, buffer);
 
@@ -82,13 +79,13 @@ export const processFileReadyService = async (data: any) => {
   }));
 
   try {
-    await vectorStore.addDocuments(documentsWithMetadata);
+    const resolvedVectorStore = await vectorStore;
+    await resolvedVectorStore.addDocuments(documentsWithMetadata);
     console.log("✅ Documents added to vector store successfully");
   } catch (error) {
     console.error("❌ Error adding documents to vector store:", error);
   }
 
-  // Clean up temp file
   fs.unlink(tempPath, (err) => {
     if (err) console.error("Temp file delete error:", err);
   });
@@ -97,19 +94,32 @@ export const processFileReadyService = async (data: any) => {
 export const processDeleteVectorDocsService = async (data: any) => {
   const { userId, fileId } = data;
 
-  // ChromaDB delete format (production)
-  const chromaFilter = {
-    $and: [
-      { "metadata.fileId": { $eq: fileId } },
-      { "metadata.userId": { $eq: userId } },
-    ],
-  };
-
   try {
-    await vectorStore.delete(chromaFilter as any);
-    console.log("✅ Vector documents deleted successfully (ChromaDB)");
+    if (isProd) {
+      // Pinecone delete format
+      const pineconeFilter = {
+        fileId: { $eq: fileId },
+        userId: { $eq: userId },
+      };
+      const resolvedVectorStore = await vectorStore;
+      await resolvedVectorStore.delete({ filter: pineconeFilter });
+      console.log("✅ Vector documents deleted successfully (Pinecone)");
+    } else {
+      // Qdrant delete format
+      const qdrantFilter = {
+        filter: {
+          must: [
+            { key: "metadata.fileId", match: { value: fileId } },
+            { key: "metadata.userId", match: { value: userId } },
+          ],
+        },
+      };
+      const resolvedVectorStore = await vectorStore;
+      await resolvedVectorStore.delete(qdrantFilter as any);
+      console.log("✅ Vector documents deleted successfully (Qdrant)");
+    }
   } catch (error) {
-    console.error("❌ Error deleting vectors (ChromaDB):", error);
+    console.error("❌ Error deleting vectors:", error);
   }
 };
 
@@ -120,7 +130,6 @@ export const deleteFile = async (userId: any, fileId: any) => {
     throw new Error("User not found");
   }
 
-  // Find file to get Filebase key for deletion
   const fileArray: Array<any> = Array.isArray(user.files) ? user.files : [];
   const fileToDelete = fileArray.find((file: any) => file.fileId === fileId);
 
@@ -138,7 +147,6 @@ export const deleteFile = async (userId: any, fileId: any) => {
     .where(eq(users.userid, userId))
     .returning();
 
-  // Delete from Filebase Storage if file info available
   if (fileToDelete?.filebaseKey) {
     try {
       await deleteFromFilebase(fileToDelete.filebaseKey);
