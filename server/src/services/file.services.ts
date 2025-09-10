@@ -44,9 +44,10 @@ export const updateDBWithUploadedFile = async (
 export const processFileReadyService = async (data: any) => {
   console.log("Processing file ready service:", data);
 
-  const fileUrl = data.ipfsUrl || data.filebaseUrl;
-  const response = await fetch(fileUrl);
+  const fileUrl = data.ipfsUrl;
 
+  const response = await fetch(fileUrl);
+  console.log("Fetched PDF response status:", response);
   if (!response.ok) {
     throw new Error(`Failed to fetch PDF: ${response.statusText}`);
   }
