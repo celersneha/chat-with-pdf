@@ -54,7 +54,8 @@ const worker = new Worker(
         },
       }));
       try {
-        await vectorStore.addDocuments(documentsWithMetadata);
+        const store = await vectorStore;
+        await store.addDocuments(documentsWithMetadata);
       } catch (error) {
         console.error("❌ Error adding documents:", error);
       }
@@ -71,15 +72,15 @@ const worker = new Worker(
       const { userId, fileId } = job.data;
 
       try {
+        const store = await vectorStore;
         if (isProd) {
-          // ChromaDB delete format
-          const chromaFilter = {
-            $and: [
-              { "metadata.fileId": { $eq: fileId } },
-              { "metadata.userId": { $eq: userId } },
-            ],
+          // Pinecone delete format
+          const pineconeFilter = {
+            fileId: { $eq: fileId },
+            userId: { $eq: userId },
           };
-          const result = await vectorStore.delete(chromaFilter as any);
+          await store.delete({ filter: pineconeFilter });
+          console.log("✅ Vector documents deleted successfully (Pinecone)");
         } else {
           // Qdrant delete format
           const qdrantFilter = {
@@ -90,7 +91,8 @@ const worker = new Worker(
               ],
             },
           };
-          await vectorStore.delete(qdrantFilter as any);
+          await store.delete(qdrantFilter as any);
+          console.log("✅ Vector documents deleted successfully (Qdrant)");
         }
       } catch (error) {
         console.error("❌ Error deleting vectors:", error);
